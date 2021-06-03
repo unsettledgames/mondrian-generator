@@ -4,8 +4,10 @@ int borderWidth = 8;
 int maxWidth = 600;
 int maxHeight = 600;
 
+int minDistanceBetweenLines = 50;
+
 // Probability that the rect becomes unsplittable
-float stopProbability = 30;
+float stopProbability = 0;
 // Amount of which the probability to stop splitting rectangles icnreases after each iteration
 float stopProbabilityIncrease = 10;
 
@@ -36,7 +38,7 @@ ArrayList<Rect> currentRects = new ArrayList();
 ArrayList<Rect> addedRects = new ArrayList();
 
 // Next time a rectangle will be drawn (this is just to show the drawing sequence)
-int nextDrawTime = millis() + 1000;
+int nextDrawTime = millis();
 
 // Range class, utility to generate random integers between min and max
 class IntRange {
@@ -175,10 +177,13 @@ void mondrian() {
     int actualIter = nIterations.get();
 
     // Iterating on the rectangles
-    for (int i=0; i<3; i++) {
+    for (int i=0; i<1; i++) {
         // Clearing the added rects list
         addedRects = new ArrayList<Rect>();
 
+        addedRects.addAll(splitVertically(currentRects.get(0), 5));
+
+/*
         // Randomly creating smaller rectangles from the bigger ones
         for (int j=0; j<currentRects.size(); j++) {
             // Getting the current rect
@@ -239,15 +244,21 @@ void mondrian() {
                         addedRects.get(k).disable();
                     }
                 }
-
-                // Debug timer so rectangles will be drawn in a visible sequence
-                //while (nextDrawTime >= millis());
-                //nextDrawTime = millis() + 500;
             }
         }
 
         currentRects = new ArrayList<Rect>();
         currentRects.addAll(addedRects);
+
+        for (int z=0; z<currentRects.size(); z++)
+        {
+            while (nextDrawTime >= millis()){}
+
+            Rect curr = currentRects.get(z);
+            fillRect(curr.getStartX(), curr.getStartY(), curr.getWidth(), curr.getHeight(), color(128,128,128));
+            nextDrawTime = millis() + 30;
+        }
+        */
     }
     
     print("-----------------------------------FINISHED--------------------------------");
@@ -256,10 +267,12 @@ void mondrian() {
 ArrayList<Rect> splitHorizontally(Rect toSplit, int nLines) {
     ArrayList<Rect> ret = new ArrayList<Rect>();
 
-    int lineDistance = round(toSplit.getHeight() / (nLines + 1)) - borderWidth;
+    int lineDistance;
     int currentY = toSplit.getStartY();
 
     for (int i=0; i<nLines; i++) {
+        lineDistance = (int)random(minDistanceBetweenLines, toSplit.getHeight() - (currentY - toSplit.getStartY())
+             - (nLines - i) * minDistanceBetweenLines);
         // Drawing a rect
         fillRect(toSplit.getStartX(), currentY, toSplit.getWidth(), lineDistance, -1);
         // Adding a new rect
@@ -273,6 +286,8 @@ ArrayList<Rect> splitHorizontally(Rect toSplit, int nLines) {
 
     // Filling the last rect
     fillRect(toSplit.getStartX(), currentY, toSplit.getWidth(), toSplit.getHeight() - currentY + borderWidth, -1);
+    // Adding the last rect
+    ret.add(new Rect(toSplit.getStartX(), currentY, toSplit.getWidth(), toSplit.getHeight() - currentY + borderWidth));
 
     return ret;
 }
@@ -280,10 +295,12 @@ ArrayList<Rect> splitHorizontally(Rect toSplit, int nLines) {
 ArrayList<Rect> splitVertically(Rect toSplit, int nLines) {
     ArrayList<Rect> ret = new ArrayList<Rect>();
 
-    int lineDistance =  round(toSplit.getWidth() / (nLines + 1)) - borderWidth;
+    int lineDistance;
     int currentX = toSplit.getStartX();
 
     for (int i=0; i<nLines; i++) {  
+        lineDistance = (int)random(minDistanceBetweenLines, toSplit.getWidth() - (currentX - toSplit.getStartX())
+            - (nLines - i) * minDistanceBetweenLines);
         // Drawing a rect
         fillRect(currentX, toSplit.getStartY(), lineDistance, toSplit.getHeight(), -1);
         ret.add(new Rect(currentX, toSplit.getStartY(), lineDistance, toSplit.getHeight()));
@@ -296,14 +313,16 @@ ArrayList<Rect> splitVertically(Rect toSplit, int nLines) {
 
     // Filling the last rect
     fillRect(currentX, toSplit.getStartY(), toSplit.getWidth() - currentX + borderWidth, toSplit.getHeight(), -1);
+    ret.add(new Rect(currentX, toSplit.getStartY(), toSplit.getWidth() - currentX + borderWidth, toSplit.getHeight()));
 
     return ret;
 }
 
 void fillRect(int startX, int startY, int width, int height, color c) {
-    if (c != color(0,0,0))
+    if (c == -1) {
         c = colors[round(random(0, 3))];
-    print("color: " + c);
+    }
+
     fill(c);
     rect(startX, startY, width, height);
 }
