@@ -49,6 +49,7 @@ void setup() {
     // Painting the canvas pink for debug
     fill(248, 0, 248);
     rect(0, 0, maxWidth, maxHeight);
+     frameRate(2);
 
     noStroke();
 
@@ -81,7 +82,7 @@ void mondrian() {
     int actualIter = nIterations.get();
 
     // Iterating on the rectangles
-    for (int i=0; i<2; i++) {
+    for (int i=0; i<3; i++) {
         // Clearing the added rects list
         addedRects = new ArrayList<Rect>();
 
@@ -145,6 +146,7 @@ void mondrian() {
         }
 
         currentRects = new ArrayList<Rect>();
+        print("Size: " + currentRects.size() + "\n");
         currentRects.addAll(addedRects);
 
         stopProbability += stopProbabilityIncrease;
@@ -157,61 +159,69 @@ void mondrian() {
 }
 
 ArrayList<Rect> splitHorizontally(Rect toSplit, int nLines) {
-    print("Divisione orizzontale\n");
     ArrayList<Rect> ret = new ArrayList<Rect>();
 
-    int lineDistance;
-    int currentY = toSplit.getStartY();
-
-    for (int i=0; i<nLines; i++) {
-        lineDistance = (int)random(minDistanceBetweenLines, toSplit.getHeight() - (currentY - toSplit.getStartY())
-             - (nLines+1 - i) * minDistanceBetweenLines);
-        
-        print("Distance: " + lineDistance + "\n");
-
-        // Drawing a rect
-        fillRect(toSplit.getStartX(), currentY, toSplit.getWidth(), lineDistance, -1);
-        // Adding a new rect
-        ret.add(new Rect(toSplit.getStartX(), currentY, toSplit.getWidth(), lineDistance));
-
-        // Drawing a line
-        currentY += lineDistance;
-        fillRect(toSplit.getStartX(), currentY, toSplit.getWidth(), borderWidth, color(0,0,0));
-        currentY += borderWidth;
+    if (nLines > 0)
+    {
+        print("Divisione orizzontale in " + nLines + "\n");
+    
+        int lineDistance;
+        int currentY = toSplit.getStartY();
+    
+        for (int i=0; i<nLines; i++) {
+            lineDistance = (int)random(minDistanceBetweenLines, toSplit.getHeight() - (currentY - toSplit.getStartY())
+                 - (nLines+1 - i) * minDistanceBetweenLines);
+            
+            print("Distance: " + lineDistance + "\n");
+    
+            // Drawing a rect
+            fillRect(toSplit.getStartX(), currentY, toSplit.getWidth(), lineDistance, -1);
+            // Adding a new rect
+            ret.add(new Rect(toSplit.getStartX(), currentY, toSplit.getWidth(), lineDistance));
+    
+            // Drawing a line
+            currentY += lineDistance;
+            fillRect(toSplit.getStartX(), currentY, toSplit.getWidth(), borderWidth, color(0,0,0));
+            currentY += borderWidth;
+        }
+    
+        // Filling the last rect
+        fillRect(toSplit.getStartX(), currentY, toSplit.getWidth(), toSplit.getHeight() - currentY + borderWidth, -1);
+        // Adding the last rect
+        ret.add(new Rect(toSplit.getStartX(), currentY, toSplit.getWidth(), toSplit.getHeight() - currentY + borderWidth));
     }
-
-    // Filling the last rect
-    fillRect(toSplit.getStartX(), currentY, toSplit.getWidth(), toSplit.getHeight() - currentY + borderWidth, -1);
-    // Adding the last rect
-    ret.add(new Rect(toSplit.getStartX(), currentY, toSplit.getWidth(), toSplit.getHeight() - currentY + borderWidth));
 
     return ret;
 }
 
 ArrayList<Rect> splitVertically(Rect toSplit, int nLines) {
-    print("Divisione verticale\n");
     ArrayList<Rect> ret = new ArrayList<Rect>();
 
-    int lineDistance;
-    int currentX = toSplit.getStartX();
+    if (nLines > 0) {
+        print("Divisione verticale in " + nLines + "\n");
 
-    for (int i=0; i<nLines; i++) {
-        lineDistance = (int)random(minDistanceBetweenLines, toSplit.getWidth() - (currentX - toSplit.getStartX())
-            - (nLines+1 - i) * minDistanceBetweenLines);
-        print("Distance: " + lineDistance + "\n");
-        // Drawing a rect
-        fillRect(currentX, toSplit.getStartY(), lineDistance, toSplit.getHeight(), -1);
-        ret.add(new Rect(currentX, toSplit.getStartY(), lineDistance, toSplit.getHeight()));
+        int lineDistance;
+        int currentX = toSplit.getStartX();
+
+        for (int i=0; i<nLines; i++) {
+            lineDistance = (int)random(minDistanceBetweenLines, toSplit.getWidth() - (currentX - toSplit.getStartX())
+                - (nLines+1 - i) * minDistanceBetweenLines);
+            print("Distance: " + lineDistance + "\n");
+            // Drawing a rect
+            fillRect(currentX, toSplit.getStartY(), lineDistance, toSplit.getHeight(), -1);
+            ret.add(new Rect(currentX, toSplit.getStartY(), lineDistance, toSplit.getHeight()));
+            
+            // Drawing a line
+            currentX += lineDistance;
+            fillRect(currentX, toSplit.getStartY(), borderWidth, toSplit.getHeight(), color(0,0,0));
+            currentX += borderWidth;
+        }
+
+        // Filling the last rect
+        fillRect(currentX, toSplit.getStartY(), toSplit.getWidth() - currentX + borderWidth, toSplit.getHeight(), -1);
+        ret.add(new Rect(currentX, toSplit.getStartY(), toSplit.getWidth() - currentX + borderWidth, toSplit.getHeight()));
         
-        // Drawing a line
-        currentX += lineDistance;
-        fillRect(currentX, toSplit.getStartY(), borderWidth, toSplit.getHeight(), color(0,0,0));
-        currentX += borderWidth;
     }
-
-    // Filling the last rect
-    fillRect(currentX, toSplit.getStartY(), toSplit.getWidth() - currentX + borderWidth, toSplit.getHeight(), -1);
-    ret.add(new Rect(currentX, toSplit.getStartY(), toSplit.getWidth() - currentX + borderWidth, toSplit.getHeight()));
 
     return ret;
 }
