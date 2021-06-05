@@ -1,25 +1,25 @@
 // Width of the border and of the lines that compose the rectangles
 int borderWidth = 8;
 // Canvas dimensions
-int maxWidth = 700;
-int maxHeight = 700;
+int maxWidth = 600;
+int maxHeight = 600;
 
-int minDistanceBetweenLines = 60;
+int minDistanceBetweenLines = 50;
 
 // Probability that the rect becomes unsplittable
-float stopProbability = 10; 
+float stopProbability = 0;
 // Amount of which the probability to stop splitting rectangles icnreases after each iteration
-float stopProbabilityIncrease = 20;
+float stopProbabilityIncrease = 10;
 
 // Useless probably
 IntRange lineOffset = new IntRange(round((float)(maxWidth) * 0.1), round((float)(maxWidth) * 0.5));
 
 // Range of horizontal lines to be drawn per rectangle
-IntRange nHorizontalLines = new IntRange(0, 4);
+IntRange nHorizontalLines = new IntRange(0, 3);
 // Range of vertical lines to be drawn per rectangle
-IntRange nVerticalLines = new IntRange(0, 4);
+IntRange nVerticalLines = new IntRange(0, 3);
 // Number of iterations of the splitting algorithm
-IntRange nIterations = new IntRange(1, 5);
+IntRange nIterations = new IntRange(0, 6);
 
 // Probability that if a rectangle is horizontal, it will be split vertically
 int perpProbability = 70;
@@ -40,192 +40,6 @@ ArrayList<Rect> addedRects = new ArrayList();
 // Next time a rectangle will be drawn (this is just to show the drawing sequence)
 int nextDrawTime = millis();
 
-void setup() {
-    // Initializing the seed
-    randomSeed(System.currentTimeMillis());
-    // Creating the canvas
-    size(700, 700);
-
-    // Painting the canvas pink for debug
-    fill(248, 0, 248);
-    rect(0, 0, maxWidth, maxHeight);
-
-    noStroke();
-
-    print("-------------------------------------GENERATING-------------------------------\n\n");
-    drawBorder();
-
-    // Adding the first rect
-    currentRects.add(new Rect(borderWidth, borderWidth, maxWidth - 2*borderWidth, maxHeight - 2*borderWidth));
-    // Generating the rest
-    mondrian();
-}
-
-float clamp(float min, float max, float v) {
-    return min(max(min, v), max);
-}
-
-void drawBorder() {
-    fill(0);
-
-    // Drawing borders
-    rect(0, 0, borderWidth, maxHeight);
-    rect(0, 0, maxWidth, borderWidth);
-    rect(maxWidth - borderWidth, 0, borderWidth, maxHeight);
-    rect(0, maxHeight - borderWidth, maxWidth, borderWidth);
-
-    noStroke();
-}
-
-void mondrian() {
-    int actualIter = nIterations.get();
-
-    // Iterating on the rectangles
-    for (int i=0; i<2; i++) {
-        // Clearing the added rects list
-        addedRects = new ArrayList<Rect>();
-
-        // Randomly creating smaller rectangles from the bigger ones
-        for (int j=0; j<currentRects.size(); j++) {
-            // Getting the current rect
-            Rect currRect = currentRects.get(j);
-
-            // If I can split the rectangle
-            if (currRect.canDraw()) {
-                // I split the rectangle. The chances that it'll be splitted horizontally are higher
-                // if it's a vertical rectangle and viceversa.
-                float rectRatio = clamp(0.33, 3, currRect.getRatio());
-
-                // Rect is horizontal
-                if (rectRatio > 1) {
-                    float hProb = perpProbability + lerp(0, (100 - perpProbability), (rectRatio - 1) / 2);
-
-                    if (random(0, 100) < hProb) {
-                        // Split horizontally
-                        addedRects.addAll(splitVertically(currRect, nHorizontalLines.get()));
-                    }
-                    else {
-                        // Split vertically
-                        addedRects.addAll(splitHorizontally(currRect, nVerticalLines.get()));
-                    }
-                }
-                // Rect is vertical
-                else if (rectRatio < 1) {
-                    float vProb = perpProbability + lerp(0, (100 - perpProbability), (rectRatio - 0.33) / 0.77);
-
-                    if (random(0, 100) < vProb) {
-                        // Split vertically
-                        addedRects.addAll(splitHorizontally(currRect, nVerticalLines.get()));
-                    }
-                    else {
-                        // Split horizontally
-                        addedRects.addAll(splitVertically(currRect, nHorizontalLines.get()));
-                    }
-                }
-                else {
-                    float hProb = random(0, 100);
-
-                    if (hProb < 50) {
-                        // Split horizontally
-                        addedRects.addAll(splitHorizontally(currRect, nHorizontalLines.get()));
-                    }
-                    else {
-                        // Split vertically
-                        addedRects.addAll(splitVertically(currRect, nVerticalLines.get()));
-                    }
-                }
-
-                for (int k=0; k<addedRects.size(); k++) {
-                    // There's a chance the generated rects won't be splittable anymore
-                    if (stopProbability > random(0, 100)) {
-                        addedRects.get(k).disable();
-                    }
-                }
-            }
-        }
-
-        currentRects = new ArrayList<Rect>();
-        currentRects.addAll(addedRects);
-
-        stopProbability += stopProbabilityIncrease;
-        // Reducing the max number of drawable lines as rects get smaller
-        nHorizontalLines.setMax(nHorizontalLines.getMax() - 1);
-        nVerticalLines.setMax(nVerticalLines.getMax() - 1);
-    }
-    
-    print("-----------------------------------FINISHED--------------------------------");
-}
-
-ArrayList<Rect> splitHorizontally(Rect toSplit, int nLines) {
-    print("Divisione orizzontale\n");
-    ArrayList<Rect> ret = new ArrayList<Rect>();
-
-    int lineDistance;
-    int currentY = toSplit.getStartY();
-
-    for (int i=0; i<nLines; i++) {
-        lineDistance = (int)random(minDistanceBetweenLines, toSplit.getHeight() - (currentY - toSplit.getStartY())
-             - (nLines+1 - i) * minDistanceBetweenLines);
-        
-        print("Distance: " + lineDistance + "\n");
-
-        // Drawing a rect
-        fillRect(toSplit.getStartX(), currentY, toSplit.getWidth(), lineDistance, -1);
-        // Adding a new rect
-        ret.add(new Rect(toSplit.getStartX(), currentY, toSplit.getWidth(), lineDistance));
-
-        // Drawing a line
-        currentY += lineDistance;
-        fillRect(toSplit.getStartX(), currentY, toSplit.getWidth(), borderWidth, color(0,0,0));
-        currentY += borderWidth;
-    }
-
-    // Filling the last rect
-    fillRect(toSplit.getStartX(), currentY, toSplit.getWidth(), toSplit.getHeight() - currentY + borderWidth, -1);
-    // Adding the last rect
-    ret.add(new Rect(toSplit.getStartX(), currentY, toSplit.getWidth(), toSplit.getHeight() - currentY + borderWidth));
-
-    return ret;
-}
-
-ArrayList<Rect> splitVertically(Rect toSplit, int nLines) {
-    print("Divisione verticale\n");
-    ArrayList<Rect> ret = new ArrayList<Rect>();
-
-    int lineDistance;
-    int currentX = toSplit.getStartX();
-
-    for (int i=0; i<nLines; i++) {
-        lineDistance = (int)random(minDistanceBetweenLines, toSplit.getWidth() - (currentX - toSplit.getStartX())
-            - (nLines+1 - i) * minDistanceBetweenLines);
-        print("Distance: " + lineDistance + "\n");
-        // Drawing a rect
-        fillRect(currentX, toSplit.getStartY(), lineDistance, toSplit.getHeight(), -1);
-        ret.add(new Rect(currentX, toSplit.getStartY(), lineDistance, toSplit.getHeight()));
-        
-        // Drawing a line
-        currentX += lineDistance;
-        fillRect(currentX, toSplit.getStartY(), borderWidth, toSplit.getHeight(), color(0,0,0));
-        currentX += borderWidth;
-    }
-
-    // Filling the last rect
-    fillRect(currentX, toSplit.getStartY(), toSplit.getWidth() - currentX + borderWidth, toSplit.getHeight(), -1);
-    ret.add(new Rect(currentX, toSplit.getStartY(), toSplit.getWidth() - currentX + borderWidth, toSplit.getHeight()));
-
-    return ret;
-}
-
-void fillRect(int startX, int startY, int width, int height, color c) {
-    if (c == -1) {
-        c = colors[round(random(0, 3))];
-    }
-
-    fill(c);
-    rect(startX, startY, width, height);
-    noStroke();
-}
-
 // Range class, utility to generate random integers between min and max
 class IntRange {
     private int min;
@@ -242,10 +56,6 @@ class IntRange {
 
     public void setMax(int max) {
         this.max = max;
-    }
-
-    public int getMax() {
-        return max;
     }
 
     public int get() {
@@ -326,4 +136,194 @@ class Rect {
     public String toString() {
         return "Start: " + startX + "; " + startY + "\nSize: " + rectWidth + "; " + rectHeight + "\n";
     }
+}
+
+void setup() {
+    // Initializing the seed
+    randomSeed(millis());
+    // Creating the canvas
+    size(600, 600);
+
+    // Painting the canvas pink for debug
+    fill(248, 0, 248);
+    rect(0, 0, maxWidth, maxHeight);
+
+    noStroke();
+
+    print("-------------------------------------GENERATING-------------------------------\n\n");
+    drawBorder();
+
+    // Adding the first rect
+    currentRects.add(new Rect(borderWidth, borderWidth, maxWidth - 2*borderWidth, maxHeight - 2*borderWidth));
+    // Generating the rest
+    mondrian();
+}
+
+float clamp(float min, float max, float v) {
+    return min(max(min, v), max);
+}
+
+void drawBorder() {
+    fill(0);
+
+    // Drawing borders
+    rect(0, 0, borderWidth, maxHeight);
+    rect(0, 0, maxWidth, borderWidth);
+    rect(maxWidth - borderWidth, 0, borderWidth, maxHeight);
+    rect(0, maxHeight - borderWidth, maxWidth, borderWidth);
+}
+
+void mondrian() {
+    int actualIter = nIterations.get();
+
+    // Iterating on the rectangles
+    for (int i=0; i<1; i++) {
+        // Clearing the added rects list
+        addedRects = new ArrayList<Rect>();
+
+        addedRects.addAll(splitVertically(currentRects.get(0), 5));
+        addedRects.addAll(splitHorizontally(currentRects.get(addedRects.get(0)), 5));
+
+/*
+        // Randomly creating smaller rectangles from the bigger ones
+        for (int j=0; j<currentRects.size(); j++) {
+            // Getting the current rect
+            Rect currRect = currentRects.get(j);
+
+            // If I can split the rectangle
+            if (currRect.canDraw()) {
+                // I split the rectangle. The chances that it'll be splitted horizontally are higher
+                // if it's a vertical rectangle and viceversa.
+                float rectRatio = clamp(0.33, 3, currRect.getRatio());
+                print("Ratio: " + rectRatio + "\n");
+
+                // Rect is horizontal
+                if (rectRatio > 1) {
+                    float hProb = perpProbability + lerp(0, (100 - perpProbability), (rectRatio - 1) / 2);
+
+                    print("H prob: " + hProb + "\n");
+                    
+                    if (random(0, 100) < hProb) {
+                        // Split horizontally
+                        addedRects.addAll(splitVertically(currRect, nHorizontalLines.get()));
+                    }
+                    else {
+                        // Split vertically
+                        addedRects.addAll(splitHorizontally(currRect, nVerticalLines.get()));
+                    }
+                }
+                // Rect is vertical
+                else if (rectRatio < 1) {
+                    float vProb = perpProbability + lerp(0, (100 - perpProbability), (rectRatio - 0.33) / 0.77);
+                    print("V prob: " + vProb  + "\n");
+
+                    if (random(0, 100) < vProb) {
+                        // Split vertically
+                        addedRects.addAll(splitHorizontally(currRect, nVerticalLines.get()));
+                    }
+                    else {
+                        // Split horizontally
+                        addedRects.addAll(splitVertically(currRect, nHorizontalLines.get()));
+                    }
+                }
+                else {
+                    float hProb = random(0, 100);
+
+                    if (hProb < 50) {
+                        // Split horizontally
+                        addedRects.addAll(splitHorizontally(currRect, nHorizontalLines.get()));
+                    }
+                    else {
+                        // Split vertically
+                        addedRects.addAll(splitVertically(currRect, nVerticalLines.get()));
+                    }
+                }
+
+                for (int k=0; k<addedRects.size(); k++) {
+                    // There's a chance the generated rects won't be splittable anymore
+                    if (random(0, 100) < stopProbability) {
+                        addedRects.get(k).disable();
+                    }
+                }
+            }
+        }
+
+        currentRects = new ArrayList<Rect>();
+        currentRects.addAll(addedRects);
+
+        for (int z=0; z<currentRects.size(); z++)
+        {
+            while (nextDrawTime >= millis()){}
+
+            Rect curr = currentRects.get(z);
+            fillRect(curr.getStartX(), curr.getStartY(), curr.getWidth(), curr.getHeight(), color(128,128,128));
+            nextDrawTime = millis() + 30;
+        }
+        */
+    }
+    
+    print("-----------------------------------FINISHED--------------------------------");
+}
+
+ArrayList<Rect> splitHorizontally(Rect toSplit, int nLines) {
+    ArrayList<Rect> ret = new ArrayList<Rect>();
+
+    int lineDistance;
+    int currentY = toSplit.getStartY();
+
+    for (int i=0; i<nLines; i++) {
+        lineDistance = (int)random(minDistanceBetweenLines, toSplit.getHeight() - (currentY - toSplit.getStartY())
+             - (nLines - i) * minDistanceBetweenLines);
+        // Drawing a rect
+        fillRect(toSplit.getStartX(), currentY, toSplit.getWidth(), lineDistance, -1);
+        // Adding a new rect
+        ret.add(new Rect(toSplit.getStartX(), currentY, toSplit.getWidth(), lineDistance));
+
+        // Drawing a line
+        currentY += lineDistance;
+        fillRect(toSplit.getStartX(), currentY, toSplit.getWidth(), borderWidth, color(0,0,0));
+        currentY += borderWidth;
+    }
+
+    // Filling the last rect
+    fillRect(toSplit.getStartX(), currentY, toSplit.getWidth(), toSplit.getHeight() - currentY + borderWidth, -1);
+    // Adding the last rect
+    ret.add(new Rect(toSplit.getStartX(), currentY, toSplit.getWidth(), toSplit.getHeight() - currentY + borderWidth));
+
+    return ret;
+}
+
+ArrayList<Rect> splitVertically(Rect toSplit, int nLines) {
+    ArrayList<Rect> ret = new ArrayList<Rect>();
+
+    int lineDistance;
+    int currentX = toSplit.getStartX();
+
+    for (int i=0; i<nLines; i++) {  
+        lineDistance = (int)random(minDistanceBetweenLines, toSplit.getWidth() - (currentX - toSplit.getStartX())
+            - (nLines - i) * minDistanceBetweenLines);
+        // Drawing a rect
+        fillRect(currentX, toSplit.getStartY(), lineDistance, toSplit.getHeight(), -1);
+        ret.add(new Rect(currentX, toSplit.getStartY(), lineDistance, toSplit.getHeight()));
+        
+        // Drawing a line
+        currentX += lineDistance;
+        fillRect(currentX, toSplit.getStartY(), borderWidth, toSplit.getHeight(), color(0,0,0));
+        currentX += borderWidth;
+    }
+
+    // Filling the last rect
+    fillRect(currentX, toSplit.getStartY(), toSplit.getWidth() - currentX + borderWidth, toSplit.getHeight(), -1);
+    ret.add(new Rect(currentX, toSplit.getStartY(), toSplit.getWidth() - currentX + borderWidth, toSplit.getHeight()));
+
+    return ret;
+}
+
+void fillRect(int startX, int startY, int width, int height, color c) {
+    if (c == -1) {
+        c = colors[round(random(0, 3))];
+    }
+
+    fill(c);
+    rect(startX, startY, width, height);
 }
