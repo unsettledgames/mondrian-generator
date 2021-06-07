@@ -273,10 +273,13 @@ ArrayList<Rect> splitHorizontally(Rect toSplit, int nLines) {
             fillRect(toSplit.getStartX(), currentY, toSplit.getWidth(), borderWidth, color(0,0,0));
             currentY += borderWidth;
         }
-        print("Curr Y: " + currentY + ", subbed: " + (toSplit.getHeight() - (currentY - toSplit.getStartY())) + "\n");
-        // Adding the last rect
-        ret.add(new Rect(toSplit.getStartX(), currentY, toSplit.getWidth(), toSplit.getHeight() - (currentY - toSplit.getStartY())));
-        fillRect(toSplit.getStartX(), currentY, toSplit.getWidth(), toSplit.getHeight() - (currentY - toSplit.getStartY()), -1);
+        
+        if ((toSplit.getHeight() - (currentY - toSplit.getStartY())) >= 0) {
+            print("Subbed: " + (toSplit.getHeight() - (currentY - toSplit.getStartY())) + "\n");
+            // Adding the last rect
+            ret.add(new Rect(toSplit.getStartX(), currentY, toSplit.getWidth(), toSplit.getHeight() - (currentY - toSplit.getStartY())));
+            fillRect(toSplit.getStartX(), currentY, toSplit.getWidth(), toSplit.getHeight() - (currentY - toSplit.getStartY()), -1);
+        }
     }
 
     return ret;
@@ -303,10 +306,12 @@ ArrayList<Rect> splitVertically(Rect toSplit, int nLines) {
             currentX += borderWidth;
         }
 
-        print("Curr X: " + currentX + ", subbed: " + (toSplit.getWidth() - (currentX - toSplit.getStartX())) + "\n");
-        // Adding the last rect
-        ret.add(new Rect(currentX, toSplit.getStartY(), toSplit.getWidth() - (currentX - toSplit.getStartX()), toSplit.getHeight()));
-        fillRect(currentX, toSplit.getStartY(), toSplit.getWidth() - (currentX - toSplit.getStartX()), toSplit.getHeight(), -1);
+        if ((toSplit.getWidth() - (currentX - toSplit.getStartX())) >= 0) {
+            print("Subbed: " + (toSplit.getWidth() - (currentX - toSplit.getStartX())) + "\n");
+            // Adding the last rect
+            ret.add(new Rect(currentX, toSplit.getStartY(), toSplit.getWidth() - (currentX - toSplit.getStartX()), toSplit.getHeight()));
+            fillRect(currentX, toSplit.getStartY(), toSplit.getWidth() - (currentX - toSplit.getStartX()), toSplit.getHeight(), -1);
+        }
     }
 
     return ret;
