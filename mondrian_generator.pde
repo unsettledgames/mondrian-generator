@@ -9,9 +9,9 @@ int maxHeight = 700;
 int minDistanceBetweenLines = 60;
 
 // Probability that the rect becomes unsplittable
-float stopProbability = 0; 
+float stopProbability = 20; 
 // Amount of which the probability to stop splitting rectangles icnreases after each iteration
-float stopProbabilityIncrease = 0;
+float stopProbabilityIncrease = 10;
 
 // Useless probably
 IntRange lineOffset = new IntRange(round((float)(maxWidth) * 0.1), round((float)(maxWidth) * 0.5));
@@ -32,7 +32,8 @@ color red = color(247, 0, 2);
 color blue = color(0, 74, 158);
 color white = color(255, 255, 255);
 
-color colors[] = {yellow, red, blue, white};
+// Putting white twice so I have more chances to pick it
+color colors[] = {yellow, red, blue, white, white};
 
 // The rectangles you have at the moment
 ArrayList<Rect> currentRects = new ArrayList();
@@ -244,7 +245,7 @@ ArrayList<Rect> splitVertically(Rect toSplit, int nLines) {
 
 void fillRect(int startX, int startY, int width, int height, color c) {
     if (c == -1) {
-        c = colors[round(random(0, 3))];
+        c = colors[round(random(0, colors.length - 1))];
     }
 
     fill(c);
