@@ -43,7 +43,7 @@ ArrayList<Rect> toDraw = new ArrayList();
 
 // Next time a rectangle will be drawn (this is just to show the drawing sequence)
 int nextDrawTime = millis();
-float textureIntensity = 0.8f;
+float textureIntensity = 0.4f;
 
 void setup() {
     // Initializing the seed
@@ -77,12 +77,10 @@ void applyTexture() {
             // Current color
             color texPixel = img.get(i % img.width, j % img.height);
             // Corresponding shade of grey
-            int grey = ((texPixel >> 16) & 0xFF +  (texPixel >> 8) & 0xFF + texPixel & 0xFF) / 3;
-
-            //print("Lerp: " + (textureIntensity * grey / 255) + "\n");
+            float grey = ((texPixel >> 16) & 0xFF +  (texPixel >> 8) & 0xFF + texPixel & 0xFF) / 3;
 
             // The pixel is lerped, the darkest the pixel in the texture, the higher the intensity of the lerp
-            set(i, j, lerpColor(get(i, j), get(i, j) + img.get(i % img.width, j % img.height), textureIntensity * grey / 255));
+            set(i, j, lerpColor(get(i, j), img.get(i % img.width, j % img.height), grey / 255 * textureIntensity));
         }
     }
 }
