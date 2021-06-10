@@ -44,7 +44,7 @@ ArrayList<Rect> toDraw = new ArrayList();
 
 // Next time a rectangle will be drawn (this is just to show the drawing sequence)
 int nextDrawTime = millis();
-float textureIntensity = 0.4f;
+float textureIntensity = 0.2f;
 
 void setup() {
     // Initializing the seed
